@@ -24,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           messages: [
             { 
               role: "system", 
-              content: "You are a senior developer. Create a technical, high-quality GitHub README.md for the following repository URL. Structure it with an Intro, Key Features, and Installation steps. dont use emojis " 
+              content: "You are a senior developer. Create a technical, high-quality GitHub README.md for the following repository URL. Structure it with an Intro of two three lines, Key Features, and Installation steps. dont use emojis and if the input doesnt match any repo available on the internet tell the user to upload a proper link of a public repo" 
             },
             { role: "user", content: `Generate a README for: ${repoUrl}` }
           ],
