@@ -10,51 +10,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: "AI_SECRET_KEY is missing. Check Vercel Dashboard." });
   }
 
-  try {
-    const response = await fetch(
-      "https://router.huggingface.co/v1/chat/completions",
-      {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({
-          model: "zai-org/GLM-5", 
-          messages: [
-            { 
-              role: "system", 
-              content: "You are a senior developer. Create a technical, high-quality GitHub README.md for the following repository URL. Structure it with an Intro of two three lines, Key Features, and Installation steps. dont use emojis and if the input doesnt match any repo available on the internet tell the user to upload a proper link of a public repo" 
-            },
-            { role: "user", content: `Generate a README for: ${repoUrl}` }
-          ],
-          max_tokens: 2048, 
-          temperature: 0.7,
-          top_p: 0.95,     
-          stream: false
-        }),
+  
+  const models = [
+    "zai-org/GLM-5",              
+    "deepseek-ai/DeepSeek-V3",    
+    "Qwen/Qwen3-Coder-32B",       
+    "mistralai/Mixtral-8x22B-v0.3" 
+  ];
+
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        "https://router.huggingface.co/v1/chat/completions",
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+          body: JSON.stringify({
+            model: model, 
+            messages: [
+              { 
+                role: "system", 
+                content: "You are a senior developer. Create a technical, high-quality GitHub README.md for the following repository URL. Structure it with an Intro of two three lines, Key Features, and Installation steps. dont use emojis and if the input doesnt match any repo available on the internet tell the user to upload a proper link of a public repo" 
+              },
+              { role: "user", content: `Generate a README for: ${repoUrl}` }
+            ],
+            max_tokens: 2048, 
+            temperature: 0.7,
+            top_p: 0.95,     
+            stream: false
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.status === 503 || response.status === 404 || response.status === 429) {
+        console.warn(`Model ${model} failed with status ${response.status}. Trying next...`);
+        continue; 
       }
-    );
 
-    const data = await response.json();
+      if (data.choices && data.choices[0]?.message?.content) {
+        return res.status(200).json({ 
+          generated_text: data.choices[0].message.content,
+          model_used: model 
+        });
+      }
 
- 
-    if (response.status === 503) {
-      return res.status(503).json({ error: "GLM-5 is currently busy. Wait 15 seconds and try again." });
+    } catch (error: any) {
+      console.error(`Error with model ${model}:`, error.message);
+      continue; 
     }
-
-    if (data.choices && data.choices[0]?.message?.content) {
-      return res.status(200).json({ 
-        generated_text: data.choices[0].message.content 
-      });
-    }
-
-    
-    return res.status(500).json({ 
-      error: "Model is waking up or overloaded. Please click Generate once more." 
-    });
-
-  } catch (error: any) {
-    return res.status(500).json({ error: "Server Error: " + error.message });
   }
+
+  return res.status(500).json({ 
+    error: "All models are currently overloaded. Please try again in 30 seconds." 
+  });
 }
