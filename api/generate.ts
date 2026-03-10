@@ -1,59 +1,87 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') return res.status(200).json({ message: "API Active" });
 
+  if (req.method !== "POST") {
+    return res.status(200).json({ message: "API Active" });
+  }
 
-  const token = (process.env.AI_SECRET_KEY || '').trim();
+  const token = (process.env.AI_SECRET_KEY || "").trim();
   const { repoUrl } = req.body;
 
+  if (!repoUrl) {
+    return res.status(400).json({ error: "No repository URL provided." });
+  }
+
   if (!token) {
-    return res.status(500).json({ error: "API Key is missing." });
+    return res.status(500).json({
+      error: "AI_SECRET_KEY is missing. Check Vercel Dashboard.",
+    });
   }
 
 
   const models = [
-    "google/gemini-flash-1.5-8b",    
-    "meta-llama/llama-3.1-8b-instruct", 
-    "deepseek/deepseek-chat"           
+    "meta-llama/Llama-3.1-8B-Instruct",
+    "mistralai/Mistral-7B-Instruct-v0.3",
+    "google/gemma-2-9b-it",
+    "Qwen/Qwen2.5-Coder-7B-Instruct"
   ];
 
   for (const model of models) {
     try {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://your-site.com", 
-          "X-Title": "README Generator",          
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [
-            { 
-              role: "system", 
-              content: "You are a senior developer. Create a technical, high-quality GitHub README.md. Intro (2-3 lines), Key Features, and Installation. No emojis. If the URL is invalid, ask for a public repo." 
-            },
-            { role: "user", content: `Generate a README for: ${repoUrl}` }
-          ],
-        }),
-      });
+
+      const response = await fetch(
+        "https://router.huggingface.co/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "x-wait-for-model": "true"
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a senior developer. Create a technical high quality GitHub README.md for the repository URL given. Include an introduction, key features and installation steps. Do not use emojis."
+              },
+              {
+                role: "user",
+                content: `Generate a README for: ${repoUrl}`
+              }
+            ],
+            max_tokens: 1200,
+            temperature: 0.6
+          }),
+        }
+      );
 
       const data = await response.json();
 
-      if (response.status === 200 && data.choices?.[0]?.message?.content) {
-        return res.status(200).json({ 
-          generated_text: data.choices[0].message.content,
-          model_used: model 
+
+      if (!response.ok || data?.error) {
+        console.warn(`Model ${model} failed`, data?.error || response.status);
+        continue;
+      }
+
+      const text = data?.choices?.[0]?.message?.content;
+
+      if (text) {
+        return res.status(200).json({
+          generated_text: text,
+          model_used: model
         });
       }
 
-      console.warn(`Model ${model} failed. Status: ${response.status}`);
-    } catch (error: any) {
-      console.error(`Error with model ${model}:`, error.message);
+    } catch (err) {
+      console.error(`Error with ${model}`, err);
+      continue;
     }
   }
 
-  return res.status(500).json({ error: "All models failed. Try again shortly." });
+  return res.status(503).json({
+    error: "All models are busy. Please try again in 20 seconds."
+  });
 }
