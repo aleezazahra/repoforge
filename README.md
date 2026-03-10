@@ -13,6 +13,6 @@ RepoForge is a high-performance web application designed to automate the creatio
 * **Frontend**: React 18, TypeScript, Tailwind CSS
 * **Icons**: Lucide React
 * **Backend**: Vercel Serverless Functions /NODE JS
-* **AI Engine**: GLM-5 (zai-org) via Hugging Face Router v1
+* **AI Engine**: hugging face models
 
 
