@@ -26,6 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
+            "x-wait-for-model": "true",
           },
           method: "POST",
           body: JSON.stringify({
