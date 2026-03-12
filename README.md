@@ -1,6 +1,6 @@
 # RepoForge
 
-RepoForge is a high-performance web application designed to automate the creation of professional GitHub documentation. By leveraging the GLM-5 model via the Hugging Face Inference Router, it analyzes repository structures to generate technical README files in seconds.
+RepoForge is a site designed to automate the creation of professional GitHub documentation. By leveraging the GLM-5 model via the Hugging Face Inference Router, it analyzes repository structures to generate technical README files in seconds.
 
 ## Features
 
