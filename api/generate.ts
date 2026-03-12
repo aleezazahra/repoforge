@@ -70,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               {
                 role: "system",
                 content:
-                  "You are a senior developer. Create a professional GitHub README.md with introduction, features and installation steps. Do not use emojis."
+                  "You are a senior developer. Create a professional GitHub README.md with introduction, features and installation steps. Do not use emojis.And also dont generate result if the link of url isnt correct or leads to a private repo and tell the user to enter a valid public github repo url"
               },
               {
                 role: "user",
