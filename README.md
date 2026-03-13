@@ -10,7 +10,7 @@ RepoForge is a site designed to automate the creation of professional GitHub doc
 
 ## Technical Stack
 
-* **Frontend**: React 18, TypeScript, Tailwind CSS
+* **Frontend**: React, TypeScript, Tailwind CSS
 * **Icons**: Lucide React
 * **Backend**: Vercel Serverless Functions /NODE JS
 * **AI Engine**: hugging face models
